@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task 1
 #SBATCH --time=10-23
 #SBATCH --partition=compute
-#SBATCH --nodelist=super003
+#SBATCH --nodelist=super001
 #SBATCH --output=/fast/lunajang/metabuli/exclusion_test/new_metabuli/logs/%j_output.log
 #SBATCH --error=/fast/lunajang/metabuli/exclusion_test/new_metabuli/logs/%j_error.log
 
@@ -21,6 +21,7 @@ QUERY_FRACTION=0.2
 ACCESSION2TAXID_SCRIPT="/home/lunajang/src/Metabuli/util/prepare_gtdb_taxonomy.sh"
 GTDB_TAXDUMP="/fast/lunajang/metabuli/exclusion_test/new_metabuli/gtdb-taxdump/R202"
 METABULI="/home/lunajang/src/Metabuli/build/bin/metabuli"  
+MASON2_SIMULATOR="/home/lunajang/src/mason2-2.0.9-Linux-x86_64_sse4/bin/mason_simulator"
 
 # mkdir -p "$OUTPUT_DIR/taxonomy" "$OUTPUT_DIR/fasta"  "$OUTPUT_DIR/metabuli_db" 
 
@@ -34,7 +35,7 @@ echo "1-2. Download assembly summary"
 # wget "ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt" -O "$OUTPUT_DIR/assembly_summary.txt"
 
 echo "1-3. Generate accession list"
-# python "/fast/lunajang/metabuli/exclusion_test/new_metabuli/code/generate_accession_list.py" \
+# python "/fast/lunajang/metabuli/exclusion_test/Metabuli_DB/generate_accession_list.py" \
 #     --metadata "$OUTPUT_DIR/bac120_metadata_r202.tsv" \
 #     --assembly_summary "$OUTPUT_DIR/assembly_summary.txt" \
 #     --output "$OUTPUT_DIR/fasta" \
@@ -46,14 +47,22 @@ echo "1-4. Download FASTA files"
 
 
 echo "2. Separate query and reference"
-python "/fast/lunajang/metabuli/exclusion_test/new_metabuli/code/get_reference_query_fa.py" \
+python "/fast/lunajang/metabuli/exclusion_test/Metabuli_DB/get_reference_query_fa.py" \
     --mapping_file "$OUTPUT_DIR/fasta/genus_fasta_mapping.txt" \
-    --fasta_dir "$OUTPUT_DIR/refseq/bacteria" \
-    --output "$OUTPUT_DIR/fasta/contigs"
+    --fasta_dir "$OUTPUT_DIR/fasta/refseq/bacteria" \
+    --output "$OUTPUT_DIR/fasta"
 
 
 echo "3. Run Mason2"
-# mason2 illumina -n 1000000 -N 1000000 -i -sq -o "$OUTPUT_DIR/fasta/reads/" "$OUTPUT_DIR/fasta/contigs/query.fa"
+# mkdir "$OUTPUT_DIR/fasta/reads"
+# mkdir "$OUTPUT_DIR/fasta/reads/query"
+# mkdir "$OUTPUT_DIR/fasta/reads/reference"
+# awk -F '/' '{print $0, $NF }' "$OUTPUT_DIR/fasta/query.list" | while read -r fna_file accession; do
+#     $MASON2_SIMULATOR -q --illumina-read-length 150\
+#     --illumina-prob-mismatch 0.0011 --illumina-prob-mismatch-begin 0.00055 --illumina-prob-mismatch-end 0.0022\
+#     --fragment-mean-size 500 --force-single-end\
+#     --read-name-prefix "$accession_" -ir "$fna_file" -n 6150 -o "$OUTPUT_DIR/fasta/reads/query/${assacc}.fasta"
+# done
 
 
 echo "4. Prepare GTDB taxonomy and accession2taxid"

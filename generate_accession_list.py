@@ -78,8 +78,8 @@ def make_accession_file(filtered_metadata, assembly_summary_file, output_dir):
             
     # Create a temporary file to store accession IDs
     accession_file = os.path.join(output_dir, "accessions.txt")
-    filtered_assemblies_unique = filter_redundant_taxids(filtered_assemblies)
-    accession_list = filtered_assemblies_unique["assembly_accession"].unique()
+    filtered_assemblies = filter_redundant_taxids(filtered_assemblies)
+    accession_list = filtered_assemblies["assembly_accession"].unique()
     with open(accession_file, "w") as f:
         for accession in accession_list:
             f.write(accession + "\n")

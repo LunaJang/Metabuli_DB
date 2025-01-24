@@ -45,63 +45,57 @@ def process_accession_file(accession, fasta_dir):
         return None
 
 
-def write_fasta_file(output_file, content_list):
-    """
-    Write the combined content to a FASTA file.
-    """
-    with open(output_file, 'a+') as f:
-        for content in content_list:
-            f.write(content)
-
-
 def split_and_merge_fasta(mapping_file, fasta_dir, output_dir):
     """
     Split sequences into reference and query for each genus and save to FASTA files.
     """
-    os.makedirs(output_dir, exist_ok=True)
-    query_file = os.path.join(output_dir, "query.fasta")
-    reference_file = os.path.join(output_dir, "reference.fasta")
+    genus_to_accessions = parse_mapping_file(mapping_file)
+
+    query_file = os.path.join(output_dir, "query.list")
+    reference_file = os.path.join(output_dir, "reference.list")
     open(query_file, 'w').close()
     open(reference_file, 'w').close()
     
-    genus_to_accessions = parse_mapping_file(mapping_file)
-
+    num_query = 0
+    num_reference = 0
+    
     for genus, accessions in genus_to_accessions.items():
         print(f"Processing genus: {genus}")
-        genus_file = os.path.join(output_dir, f"{genus}.fasta")
-        open(genus_file, 'w').close()
         
         # Split accessions into query and reference
         query_accessions, reference_accessions = determine_query_and_reference(accessions)
         
         # Collect FASTA contents
-        query_content = []
-        reference_content = []
+        num_genus_query = 0
+        num_genus_reference = 0
         for accession in accessions:
             content = process_accession_file(accession, fasta_dir)
             if content:
+                accession_file = os.path.join(fasta_dir, accession, f"{accession}.fna")
+                open(accession_file, 'w').close()        
+                with open(accession_file, 'a+') as f:
+                    f.write(content)
+                    
                 if accession in query_accessions:
-                    query_content.append(content)
+                    num_genus_query += 1
+                    with open(query_file, "a") as f:
+                        f.write(f"{accession_file}\n")
                 else:
-                    reference_content.append(content)
+                    num_genus_reference += 1
+                    with open(reference_file, "a") as f:
+                        f.write(f"{accession_file}\n")
+                        
+        num_query += num_genus_query
+        num_reference += num_genus_reference
 
-        # Write to files
-        write_fasta_file(query_file, query_content)
-        write_fasta_file(reference_file, reference_content)
-        write_fasta_file(genus_file, query_content + reference_content)
-        
-        print(f"  Query from genus {genus} added to: {query_file}")
-        print(f"  Reference from genus {genus} added to: {reference_file}")
-        print(f"  Genus sequences saved to: {genus_file}")
-
-    print(f"FASTA splitting completed. Query saved to {query_file}, Reference saved to {reference_file}")
+    print(f"Query / reference splitting completed. Query saved to {query_file} ({num_query}), Reference saved to {reference_file} ({num_reference}).")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare Accession and Genus Mapping Files")
-    parser.add_argument("--mapping_file", type=str, required=True, help="GTDB metadata file path")
-    parser.add_argument("--fasta_dir", type=str, required=True, help="refseq assembly summary file path")
-    parser.add_argument("--output", type=str, required=True, help="Output directory for accession and mapping files")
+    parser.add_argument("--mapping_file", type=str, required=True, help="genus_fasta_mapping.txt file path")
+    parser.add_argument("--fasta_dir", type=str, required=True, help="input directory for FASTA files")    
+    parser.add_argument("--output", type=str, required=True, help="output directory for query and reference lists")
     
     args = parser.parse_args()
     
