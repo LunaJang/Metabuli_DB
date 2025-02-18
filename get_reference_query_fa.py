@@ -17,16 +17,12 @@ def parse_mapping_file(mapping_file):
     return genus_to_accessions
 
 
-def determine_query_and_reference(accessions, num_query=None):
+def determine_query_and_reference(accessions, query_fraction, num_query=None):
     """
     Split accession IDs into query and reference sets.
     """
     num_species = len(accessions)
-    if num_query is None:
-        if num_species > 4:
-            num_query = int(0.2 * num_species)
-        else:
-            num_query = 1
+    num_query = max(1, int(query_fraction * num_species))
     query_accessions = set(random.sample(accessions, num_query))
     reference_accessions = set(accessions) - query_accessions
     return query_accessions, reference_accessions
@@ -45,7 +41,7 @@ def process_accession_file(accession, fasta_dir):
         return None
 
 
-def split_and_merge_fasta(mapping_file, fasta_dir, output_dir):
+def split_and_merge_fasta(mapping_file, fasta_dir, output_dir, query_fraction):
     """
     Split sequences into reference and query for each genus and save to FASTA files.
     """
@@ -63,7 +59,7 @@ def split_and_merge_fasta(mapping_file, fasta_dir, output_dir):
         print(f"Processing genus: {genus}")
         
         # Split accessions into query and reference
-        query_accessions, reference_accessions = determine_query_and_reference(accessions)
+        query_accessions, reference_accessions = determine_query_and_reference(accessions, query_fraction)
         
         # Collect FASTA contents
         num_genus_query = 0
@@ -96,8 +92,9 @@ if __name__ == "__main__":
     parser.add_argument("--mapping_file", type=str, required=True, help="genus_fasta_mapping.txt file path")
     parser.add_argument("--fasta_dir", type=str, required=True, help="input directory for FASTA files")    
     parser.add_argument("--output", type=str, required=True, help="output directory for query and reference lists")
+    parser.add_argument("--query_fraction", type=float, required=True, help="ratio of query")
     
     args = parser.parse_args()
     
 
-    split_and_merge_fasta(args.mapping_file, args.fasta_dir, args.output)
+    split_and_merge_fasta(args.mapping_file, args.fasta_dir, args.output, args.query_fraction)
