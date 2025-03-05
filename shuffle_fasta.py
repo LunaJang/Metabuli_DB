@@ -18,7 +18,6 @@ if __name__ == "__main__":
     parser.add_argument("--shuffled_query", type=str, required=True, help="shuffled_query.fasta file path")
     args = parser.parse_args()   
     
-    # Read paired-end FASTA files
     queries = read_fasta(args.query)
     # Shuffle the combined pairs
     random.shuffle(queries)

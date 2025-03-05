@@ -22,6 +22,7 @@ ACCESSION2TAXID_SCRIPT="/home/lunajang/src/Metabuli/util/prepare_gtdb_taxonomy.s
 GTDB_TAXDUMP="/fast/lunajang/metabuli/exclusion_test/new_metabuli/gtdb-taxdump/R220"
 METABULI="/home/lunajang/src/Metabuli/build_devbox/bin/metabuli"  
 MASON2_SIMULATOR="/home/lunajang/src/mason2-2.0.9-Linux-x86_64_sse4/bin/mason_simulator"
+DEPTH=0.25        
 
 # mkdir -p "$OUTPUT_DIR/fasta"
 
@@ -95,6 +96,9 @@ awk -F '/' '{print $0, $NF }' "$OUTPUT_DIR/fasta/query.list" | while read -r FNA
         rm -f "$TEMP_FASTA"
         continue
     fi
+    
+    TEMP_FASTA="$OUTPUT_DIR/fasta/temp/temp_$ACCESSION.fasta"
+    seqkit seq -m 500 -g "$FNA_FILE" > "$TEMP_FASTA"
 
     $MASON2_SIMULATOR \
         -q \
@@ -103,11 +107,11 @@ awk -F '/' '{print $0, $NF }' "$OUTPUT_DIR/fasta/query.list" | while read -r FNA
         --illumina-prob-mismatch-begin 0.00055 \
         --illumina-prob-mismatch-end 0.0022 \
         --fragment-mean-size 500 \
-        --force-single-end \
         --read-name-prefix "${ACCESSION}_" \
         -ir "$TEMP_FASTA" \
-        -n 6150 \
-        -o "$OUTPUT_DIR/fasta/reads/query/$ACCESSION.fasta"
+        -n "$N" \
+        -o "$OUTPUT_DIR/fasta/reads/depth_$DEPTH/mason_result/$ACCESSION.fasta"
+        #--force-single-end \
 
     rm -f "$TEMP_FASTA"
     rm -f "$TEMP_FASTA.fai"
@@ -115,10 +119,10 @@ awk -F '/' '{print $0, $NF }' "$OUTPUT_DIR/fasta/query.list" | while read -r FNA
 done
 
 echo "4-2. Make query file and shuffle it"
-cat $OUTPUT_DIR/fasta/reads/query/*.fasta > "$OUTPUT_DIR/fasta/reads/query/query.fasta"
+cat $OUTPUT_DIR/fasta/reads/depth_$DEPTH/mason_result/*.fasta > "$OUTPUT_DIR/fasta/reads/depth_$DEPTH/query.fasta"
 python "/fast/lunajang/metabuli/exclusion_test/Metabuli_DB/shuffle_fasta.py" \
-    --query "$OUTPUT_DIR/fasta/reads/query/query.fasta" \
-    --shuffled_query "$OUTPUT_DIR/fasta/reads/query/shuffled_query.fasta"
+    --query "$OUTPUT_DIR/fasta/reads/depth_$DEPTH/query.fasta" \
+    --shuffled_query "$OUTPUT_DIR/fasta/reads/depth_$DEPTH/shuffled_query.fasta"
 
 echo ""
 
