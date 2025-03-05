@@ -14,7 +14,7 @@ source ~/.bashrc
 source activate base
 conda activate metabuli
 
-DEPTH=8  
+DEPTH=8
 OUTPUT_DIR="/fast/lunajang/metabuli/exclusion_test/new_metabuli/fasta"
 MASON2_SIMULATOR="/home/lunajang/src/mason2-2.0.9-Linux-x86_64_sse4/bin/mason_simulator"
 
@@ -50,8 +50,8 @@ awk -F '/' '{print $0, $NF }' "$OUTPUT_DIR/query.list" | while read -r FNA_FILE 
         --read-name-prefix "${ACCESSION}_" \
         -ir "$TEMP_FASTA" \
         -n "$N" \
-        -o "$OUTPUT_DIR/reads/paired/depth_$DEPTH/mason_result/$ACCESSION_1.fasta" \
-        -or "$OUTPUT_DIR/reads/paired/depth_$DEPTH/mason_result/$ACCESSION_2.fasta"
+        -o $OUTPUT_DIR/reads/paired/depth_$DEPTH/mason_result/"$ACCESSION"_1.fasta \
+        -or $OUTPUT_DIR/reads/paired/depth_$DEPTH/mason_result/"$ACCESSION"_2.fasta
 
     rm -f "$TEMP_FASTA"
     rm -f "$TEMP_FASTA.fai"
