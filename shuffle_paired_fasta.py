@@ -1,4 +1,5 @@
 import random
+import argparse
 
 def read_fasta(filepath):
     with open(filepath, 'r') as f:
